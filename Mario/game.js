@@ -3,8 +3,7 @@ kaboom({
     debug: true,
     global: true,
     fullscreen: true,
-    clearColor: [0, 0, 0, 1],
-    scale: 1.5
+    clearColor: [0, 0, 0, 1]
 });
 
 // Load sprites
@@ -42,7 +41,7 @@ scene("game", () => {
         "+": [sprite("qBlock"), solid(), "coinQBlock"],
         "#": [sprite("brickBlock"), solid(), "brickBlock"],
         "0": [sprite("disbaledBlock"), solid(), "disbaledBlock"],
-        "M": [sprite("mushroom"), "mushroom"]
+        "M": [sprite("mushroom"), "mushroom", body()]
     };
 
     const level = addLevel(map, levelConfig);
@@ -125,6 +124,10 @@ scene("game", () => {
         destroy(mushroom);
     });
 
+    action("mushroom", mushroom => {
+        mushroom.move(50, 0);
+    });
+
 
     // Helper functions
     updateScore = (value) => {
@@ -133,28 +136,17 @@ scene("game", () => {
     }
 
     function marioSizeExt(){
-        let timer = 0
         let isBig = false
         return {
-            update() {
-                if (isBig) {
-                    timer -= dt()
-                    if (timer <= 0) {
-                        this.smallify()
-                    }
-                }
-            },
             isBig() {
                 return isBig
             },
             makeSmall() {
                 this.scale = vec2(1)
-                timer = 0
                 isBig = false
             },
             makeBig(time) {
                 this.scale = vec2(2)
-                timer = time
                 isBig = true
             }
         }
