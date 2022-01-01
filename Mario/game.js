@@ -14,6 +14,8 @@ loadSprite("mario", "Wb1qfhK.png");
 loadSprite("qBlock", "gesQ1KP.png");
 loadSprite("groundBrown", "M6rwarW.png");
 loadSprite("coin", "wbKxhcd.png");
+loadSprite("brickBlock", "pogC9x5.png");
+loadSprite("disbaledBlock", "bdrLpi6.png");
 
 scene("game", () => {
 
@@ -22,8 +24,8 @@ scene("game", () => {
     const map = [
         "                                    ",
         "                                    ",
-        "           C                        ",
-        "          CC  ?+                    ",
+        "     #     C                        ",
+        "     #    CC  ?+                    ",
         "         CCC                        ",
         "                                    ",
         "=======================  ==========="
@@ -33,9 +35,11 @@ scene("game", () => {
         height: 20,
         width: 20,
         "=": [sprite("groundBrown"), solid()],
-        "C": [sprite("coin")],
+        "C": [sprite("coin"), "coin"],
         "?": [sprite("qBlock"), solid(), "mushroom-qBlock"],
-        "+": [sprite("qBlock"), solid(), "mushroom-qBlock"]
+        "+": [sprite("qBlock"), solid(), "coin-qBlock"],
+        "#": [sprite("brickBlock"), solid(), "brickBlock"],
+        "0": [sprite("disbaledBlock"), solid(), "disbaledBlock"],
     };
 
     const level = addLevel(map, levelConfig);
@@ -47,13 +51,12 @@ scene("game", () => {
         origin("bot") // disbale unnecesary stuff from using body()
     ]);
 
-    const score = 0;
     const scoreLabel = add([
-        text(score),
+        text(0),
         pos(30, 30),
         layer("ui"),
         {
-            value: score
+            value: 0
         }
     ])
 
@@ -77,11 +80,40 @@ scene("game", () => {
         turboEnabled = false;
     });
     keyPress("space", () => {
-        if(mario.grounded()){
+        if(mario.grounded())
             mario.jump(jumpForce);
+    });
+
+    // Game logic
+    mario.on("headbump", obj => {
+        if(obj.is("coin-qBlock")){
+            // Spawn temp. coin and disable block
+            let tmpCoin = level.spawn("C", obj.gridPos.sub(0,1));
+            // Spawn disabled block
+            level.spawn("0", obj.gridPos.sub(0,0))
+            destroy(obj);
+
+            // Increment score
+            updateScore(100);
+
+            // Remove coin from box
+            setTimeout(() => {
+                destroy(tmpCoin);
+                console.log(score);
+            }, 500)
         }
-    })
+        else if(obj.is("brickBlock")){
+            destroy(obj);
+        }
+    });
+
+    updateScore = (value) => {
+        scoreLabel.value += value;
+        scoreLabel.text =  scoreLabel.value;
+    }
 
 });
 
 start("game");
+
+
