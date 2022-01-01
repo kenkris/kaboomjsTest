@@ -16,6 +16,7 @@ loadSprite("groundBrown", "M6rwarW.png");
 loadSprite("coin", "wbKxhcd.png");
 loadSprite("brickBlock", "pogC9x5.png");
 loadSprite("disbaledBlock", "bdrLpi6.png");
+loadSprite("mushroom", "0wMd92p.png");
 
 scene("game", () => {
 
@@ -27,7 +28,7 @@ scene("game", () => {
         "     #     C                        ",
         "     #    CC  ?+                    ",
         "         CCC                        ",
-        "                                    ",
+        "                      =             ",
         "=======================  ==========="
     ];
 
@@ -36,10 +37,12 @@ scene("game", () => {
         width: 20,
         "=": [sprite("groundBrown"), solid()],
         "C": [sprite("coin"), "coin"],
-        "?": [sprite("qBlock"), solid(), "mushroom-qBlock"],
-        "+": [sprite("qBlock"), solid(), "coin-qBlock"],
+        "c": [sprite("coin"), "coinFromBlock"],
+        "?": [sprite("qBlock"), solid(), "mushroomQBlock"],
+        "+": [sprite("qBlock"), solid(), "coinQBlock"],
         "#": [sprite("brickBlock"), solid(), "brickBlock"],
         "0": [sprite("disbaledBlock"), solid(), "disbaledBlock"],
+        "M": [sprite("mushroom"), "mushroom"]
     };
 
     const level = addLevel(map, levelConfig);
@@ -48,7 +51,8 @@ scene("game", () => {
         sprite("mario", solid()),
         pos(20, 0),
         body(), // gravity
-        origin("bot") // disbale unnecesary stuff from using body()
+        origin("bot"), // disbale unnecesary stuff from using body()
+        marioSizeExt()
     ]);
 
     const scoreLabel = add([
@@ -80,17 +84,17 @@ scene("game", () => {
         turboEnabled = false;
     });
     keyPress("space", () => {
-        if(mario.grounded())
+        if (mario.grounded())
             mario.jump(jumpForce);
     });
 
     // Game logic
     mario.on("headbump", obj => {
-        if(obj.is("coin-qBlock")){
+        if (obj.is("coinQBlock")) {
             // Spawn temp. coin and disable block
-            let tmpCoin = level.spawn("C", obj.gridPos.sub(0,1));
+            let tmpCoin = level.spawn("c", obj.gridPos.sub(0, 1));
             // Spawn disabled block
-            level.spawn("0", obj.gridPos.sub(0,0))
+            level.spawn("0", obj.gridPos.sub(0, 0));
             destroy(obj);
 
             // Increment score
@@ -99,17 +103,61 @@ scene("game", () => {
             // Remove coin from box
             setTimeout(() => {
                 destroy(tmpCoin);
-                console.log(score);
             }, 500)
         }
-        else if(obj.is("brickBlock")){
+        else if (obj.is("mushroomQBlock")) {
+            level.spawn("M", obj.gridPos.sub(0, 1));
+            level.spawn("0", obj.gridPos.sub(0, 0));
+            destroy(obj);
+        }
+        else if (obj.is("brickBlock")) {
             destroy(obj);
         }
     });
 
+    mario.collides("coin", coin => {
+        updateScore(100);
+        destroy(coin);
+    });
+
+    mario.collides("mushroom", mushroom => {
+        mario.makeBig();
+        destroy(mushroom);
+    });
+
+
+    // Helper functions
     updateScore = (value) => {
         scoreLabel.value += value;
-        scoreLabel.text =  scoreLabel.value;
+        scoreLabel.text = scoreLabel.value;
+    }
+
+    function marioSizeExt(){
+        let timer = 0
+        let isBig = false
+        return {
+            update() {
+                if (isBig) {
+                    timer -= dt()
+                    if (timer <= 0) {
+                        this.smallify()
+                    }
+                }
+            },
+            isBig() {
+                return isBig
+            },
+            makeSmall() {
+                this.scale = vec2(1)
+                timer = 0
+                isBig = false
+            },
+            makeBig(time) {
+                this.scale = vec2(2)
+                timer = time
+                isBig = true
+            }
+        }
     }
 
 });
